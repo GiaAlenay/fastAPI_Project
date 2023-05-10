@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String
 from pydantic import BaseModel
+from typing import Optional
 
 #cambiar con sus datos en este caso la base de datos la llame item_db
 DATABASE_URL = "postgresql://postgres:postgres@localhost/item_db"
@@ -22,8 +23,8 @@ class Item(Base):
 
 
 class ItemCreate(BaseModel):
-    name: str
-    description: str
+    name: Optional[str]
+    description: Optional[str]
 
 def get_db():
     try:
@@ -57,8 +58,10 @@ def update_item(item_id: int, item: ItemCreate, db: Session = Depends(get_db)):
     db_item = db.query(Item).filter(Item.id == item_id).first()
     if not db_item:
         raise HTTPException(status_code=404, detail="Item not found")
-    db_item.name = item.name
-    db_item.description = item.description
+    if item.name:
+        db_item.name = item.name
+    if item.description:
+        db_item.description = item.description
     db.commit()
     db.refresh(db_item)
     return db_item
