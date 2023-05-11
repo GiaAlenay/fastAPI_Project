@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker,relationship
+from sqlalchemy.orm import Session, sessionmaker,relationship,joinedload
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String,ForeignKey, Table
 from pydantic import BaseModel
@@ -59,6 +59,12 @@ def read_users(db:Session=Depends(get_db)):
     users=db.query(User).all()
     return users
 
+@app.get("/users/items")
+def read_users_items(db: Session = Depends(get_db)):
+    users = db.query(User).options(joinedload(User.items)).all()
+    return {"users": [user.__dict__ for user in users]}
+
+
 @app.get("/users/{user_id}")
 def read_user(user_id :int, db:Session=Depends(get_db)):
     user=db.query(User).filter(User.id==user_id).first()
@@ -100,9 +106,11 @@ def delete_user(user_id:int, db:Session=Depends(get_db)):
         raise HTTPException(status_code=404, detail="Item not found")
     db.delete(user)
     db.commit()
-    return user    
-@app.put("/users/{user_id}")
+    return user  
 
+
+
+@app.get("/items")
 def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = db.query(Item).offset(skip).limit(limit).all()
     return items
@@ -136,8 +144,7 @@ def update_item(item_id: int, item: ItemAttributes, db: Session = Depends(get_db
     return db_item
 
 @app.delete("/items/{item_id}")
-def delete_item(item_id: int, db: Session = Depends(get_db)):
- 
+def delete_item(item_id: int, db: Session = Depends(get_db)): 
     db_item = db.query(Item).filter(Item.id == item_id).first()
     if not db_item:
         raise HTTPException(status_code=404, detail="Item not found")
