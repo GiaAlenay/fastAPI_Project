@@ -35,7 +35,6 @@ class User(Base):
     gender=Column(String(255), nullable=False )
     items = relationship("Item", secondary=association_table, back_populates="users")
 
-
 class ItemAttributes(BaseModel):
     id: Optional[int]
     name: Optional[str]
